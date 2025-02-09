@@ -1,5 +1,3 @@
-\`\`\`markdown
-
 # Paulmann Gent 2 RGB Remote Home Assistant Blueprint
 
 This Home Assistant blueprint provides control of lights using a Paulmann Gent 2 RGB remote (and likely compatible Sunricher ZG2868 models) via Zigbee2MQTT. 
@@ -20,11 +18,11 @@ The blueprint is designed primarily for RGB color lights but can be used with ot
 
 This blueprint supports the following features of the Paulmann Gent 2 RGB remote:
 
-  * **On/Off Control:** Toggles the power state of the configured lights using the on/off buttons.
+  * **On/Off Control:** Toggles the power state of the configured lights using the on/off buttons. (cf. limitations below for the implications)
   * **Brightness Adjustment:**  Increases and decreases brightness in steps using dedicated brightness up/down buttons.
   * **Color Temperature Control:** Sets predefined color temperatures (Warm White, Neutral White, Cold White) using the dedicated color temperature buttons (Fire, Play, Snowflake icons).
   * **Color Selection from Color Wheel:** Allows you to select colors using the remote's color wheel, controlling the hue and saturation of your lights.
-  * **Scene Recall:**  Supports recalling up to 7 pre-configured lighting scenes with custom colors and brightness levels, accessible via scene buttons on the remote.
+  * **Scene Recall:**  Supports recalling up to 7 pre-configured lighting scenes with custom colors and brightness levels, accessible via the 7 scene buttons on the remote.
   * **Transition Time:**  Allows you to configure a transition time for smooth changes in brightness, color, and color temperature.
   * **Control of Multiple Light Groups:**  Provides configuration for controlling up to four different groups of lights, each assigned to a dedicated button on the remote.
 
@@ -32,7 +30,7 @@ This blueprint supports the following features of the Paulmann Gent 2 RGB remote
 
 The following limitations are currently present in this blueprint:
 
-  * **Discrete Color Temperatures:** The color temperature buttons set predefined, discrete color temperatures (Warm, Neutral, Cold) rather than providing continuous color temperature adjustment.
+  * **Discrete Color Temperatures:** The color temperature buttons set predefined, discrete color temperatures (Warm, Neutral, Cold) rather than providing continuous color temperature adjustment. This saves us from weird hacks qand/or input helpers
   * **Saturation Button (Center of Color Wheel) Unsupported:** The function of the saturation button in the middle of the color wheel is currently unclear and therefore not implemented.
   * **`color_move` Not Implemented:** Continuous color movement functionality (`color_move` command) is not implemented as its behavior with multiple lights is ambiguous.
   * **`light.toggle` for On/Off:** The blueprint uses `light.toggle` for on/off commands because the remote does not report light state. This means that if lights in a group have differing states, `toggle` might produce unexpected results.  For consistent on/off behavior across a group, ensure all lights in the group are in the same state before using the on/off buttons.
@@ -85,7 +83,6 @@ The following areas could be improved in future versions of this blueprint:
   * **Color Temperature Step Logic Verification and Correction:**  Verify and potentially correct the logic of the color temperature step buttons (`color_temperature_step_up`/`_down`) to ensure they control color temperature in the intended warmer/cooler direction.
   * **Implement `hue_move` Functionality:** Fully implement continuous hue control (`hue_move` command) from the color wheel.
   * **Investigate Saturation Button Behavior:**  Further investigate the function and potential implementation of the saturation button (center of the color wheel).
-  * **More Specific Debug Topic:** Change the debug MQTT topic from `test` to a more specific topic for better organization and to avoid conflicts with other MQTT devices.
   * **Error Handling:** Implement more robust error handling and logging within the automation for potential issues.
   * **Clarify Color Temperature Button Behavior in Documentation:**  Improve documentation clarity regarding the discrete nature of the color temperature buttons and their configured Kelvin values.
   * **Consider "Stop" Action for Movement Commands:** If continuous movement commands like `hue_move` or `color_move` are implemented, add a "stop" action triggered by button release.
@@ -94,5 +91,3 @@ The following areas could be improved in future versions of this blueprint:
 
 This software is provided "as is," without any warranties or guarantees of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement. The authors and distributors shall not be liable for any damages arising from the use, inability to use, or performance of this software. Use at your own risk.
 
-```
-```
