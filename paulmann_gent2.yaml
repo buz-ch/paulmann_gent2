@@ -1,0 +1,342 @@
+# This blueprint uses zigbee2mqtt to receive commands to control lights from a Paulmann Gent2 RGB remote (see https://en.paulmann.com/detail/d6cceca46d334842bd3bd2008204274c and https://www.zigbee2mqtt.io/devices/501.40.html) which I believe is AKA Sunricher ZG2868.
+# Make sure to use the proper zigbee2mqtt topic and device name for the remote!
+#
+# Most features of the remote are supported, with a few limitations
+# - The color temperature buttons set three discrete configurable color temperatures (no increasing / decreasing) as it is not obvious to me how steps should work with different lights.
+# - The saturation button in the middle of the color wheel is not supported (do not understand what it is supposed to do)
+# - Color_move is not currently implemented (again, it's not obvious how that should behave with multiple lights)
+# - On/off uses light.toggle as the remote does not know the state - especially if you control the lights by other means. This however means that  if lights have differing states, they will switch (you can turn all of them on with some other command)!
+# - I have tested only with Philips Hue Color Lights, in particular LCA004 and Infuse. I have no idea what happens with non RGB lights, a lot of operations do not really make a lot sense for those)
+#
+# As usual (but more so because of the ability to use multiple targets at the same time), if the target is a group of zigbee lights, zigbee group is preferable to lighten load on the mesh.
+#
+# In case it's not obvious: this supersedes binding as per the remote manual. I have no idea what happens if you mix the blueprint with bindings as per the documentation of the remote.
+#
+# Disclaimer: This software is provided "as is," without any warranties or guarantees of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement. The authors and distributors shall not be liable for any damages arising from the use, inability to use, or performance of this software. Use at your own risk.
+
+blueprint:
+  name: Paulmann Gent 2 RGB Remote
+  description: Control lights with the Paulmann Gent2 (and probably Sunricher ZG2868) RGB remote via Zigbee2MQTT
+  domain: automation
+  input:
+    mqtt_topic:
+      name: MQTT Topic
+      description: The MQTT topic for the remote (usually zigbee2mqtt/{FRIENDLY_NAME})
+      default: "zigbee2mqtt/"
+      selector:
+        text:
+
+    target_lights_1:
+      name: Lights on button 1
+      description: The lights that button 1 will control.
+      default: []
+      selector:
+        target:
+          entity:
+            domain: light
+    target_lights_2:
+      name: Lights on button 2
+      description: The lights that button 2 will control.
+      default: []
+      selector:
+        target:
+          entity:
+            - domain: light
+    target_lights_3:
+      name: Lights on button 3
+      description: The lights that button 3 will control.
+      default: []
+      selector:
+        target:
+          entity:
+            - domain: light
+    target_lights_4:
+      name: Lights on button 4
+      description: The lights that button 4 will control.
+      default: []
+      selector:
+        target:
+          entity:
+            - domain: light
+
+    transition_time:
+      name: Transition time
+      description: How long the transition from one state to the next should take in seconds
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 1800
+
+    color_temperature_warm_white:
+      name: Color Temperature for Warm white
+      description: Which color temp to use for the 'fire' button (Kelvin). General purpose RGB bulbs generally top out at 6500K or so.
+      default: 2700
+      selector:
+        number:
+          min: 2000
+          max: 9000
+    color_temperature_neutral_white:
+      name: Color Temperature for Neutral white
+      description: Which color temp to use for the 'play' button (Kelvin). General purpose RGB bulbs generally top out at 6500 or so.
+      default: 4000
+      selector:
+        number:
+          min: 2000
+          max: 9000
+    color_temperature_cold_white:
+      name: Color Temperature for Cold white
+      description: Which color temp to use for the 'snowflake' button (Kelvin). General purpose RGB bulbs generally top out at 6500 or so.
+      default: 6000
+      selector:
+        number:
+          min: 2000
+          max: 9000
+
+    scene_1_color:
+      name: Color of scene 1
+      description: Which color for scene 1
+      default: [255, 255, 255]
+      selector:
+        color_rgb:
+    scene_1_brightness:
+      name: Brightness of scene 1
+      description: Which brightness for scene 1
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+
+    scene_2_color:
+      name: Color of scene 2
+      description: Which color for scene 2
+      default: [255, 255, 255]
+      selector:
+        color_rgb:
+    scene_2_brightness:
+      name: Brightness of scene 2
+      description: Which brightness for scene 2
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+
+    scene_3_color:
+      name: Color of scene 3
+      description: Which color for scene 3
+      default: [255, 255, 255]
+      selector:
+        color_rgb:
+    scene_3_brightness:
+      name: Brightness of scene 3
+      description: Which brightness for scene 3
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+
+    scene_4_color:
+      name: Color of scene 4
+      description: Which color for scene 4
+      default: [255, 255, 255]
+      selector:
+        color_rgb:
+    scene_4_brightness:
+      name: Brightness of scene 4
+      description: Which brightness for scene 4
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+
+    scene_5_color:
+      name: Color of scene 5
+      description: Which color for scene 5
+      default: [255, 255, 255]
+      selector:
+        color_rgb:
+    scene_5_brightness:
+      name: Brightness of scene 5
+      description: Which brightness for scene 5
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+
+    scene_6_color:
+      name: Color of scene 6
+      description: Which color for scene 6
+      default: [255, 255, 255]
+      selector:
+        color_rgb:
+    scene_6_brightness:
+      name: Brightness of scene 6
+      description: Which brightness for scene 6
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+
+    scene_7_color:
+      name: Color of scene 7
+      description: Which color for scene 7
+      default: [255, 255, 255]
+      selector:
+        color_rgb:
+    scene_7_brightness:
+      name: Brightness of scene 7
+      description: Which brightness for scene 7
+      default: 80
+      selector:
+        number:
+          min: 1
+          max: 100
+
+trigger:
+  - platform: mqtt
+    topic: !input mqtt_topic
+
+action:
+  - variables:
+      command_name: "{{ trigger.payload_json.action[:-2] }}" #last two characters are _BUTTONNUMBER
+      target_light_array:
+        - !input target_lights_1
+        - !input target_lights_2
+        - !input target_lights_3
+        - !input target_lights_4
+      scene_color_array:
+        - !input scene_1_color
+        - !input scene_2_color
+        - !input scene_3_color
+        - !input scene_4_color
+        - !input scene_5_color
+        - !input scene_6_color
+        - !input scene_7_color
+      scene_brightness_array:
+        - !input scene_1_brightness
+        - !input scene_2_brightness
+        - !input scene_3_brightness
+        - !input scene_4_brightness
+        - !input scene_5_brightness
+        - !input scene_6_brightness
+        - !input scene_7_brightness
+      selected_target_light_id: "{{ trigger.payload_json.action[-1]}}" #last char is LIGHTNUMBER
+      selected_target_lights: "{{target_light_array[selected_target_light_id-1]}}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name == 'on' or  command_name == 'off'}}"
+        sequence:
+          - action: light.toggle
+            target: "{{selected_target_lights}}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name == 'brightness_step_down' }}"
+        sequence:
+          - action: light.turn_on
+            target: "{{selected_target_lights}}"
+            data:
+              brightness_step_pct: -10
+              transition: !input transition_time
+
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name == 'brightness_step_up' }}"
+        sequence:
+          - action: light.turn_on
+            target: "{{selected_target_lights}}"
+            data:
+              brightness_step_pct: 10
+              transition: !input transition_time
+
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name == 'color_temperature_step_down' }}"
+        sequence:
+          - action: light.turn_on
+            target: "{{selected_target_lights}}"
+            data:
+              color_temp_kelvin: !input color_temperature_cold_white
+              transition: !input transition_time
+
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name == 'color_temperature_step_up' }}"
+        sequence:
+          - action: light.turn_on
+            target: "{{selected_target_lights}}"
+            data:
+              color_temp_kelvin: !input color_temperature_warm_white
+              transition: !input transition_time
+
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name == 'color_temperature_move' }}"
+        sequence:
+          - action: light.turn_on
+            target: "{{selected_target_lights}}"
+            data:
+              color_temp_kelvin: !input color_temperature_neutral_white
+              transition: !input transition_time
+
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name == 'hue_move' }}"
+        sequence:
+          - action: mqtt.publish
+            metadata: {}
+            data:
+              topic: test
+              payload: "{{NOW}} command_name {{command_name}}, selected_target_light: {{selected_target_light_id}}  target_lights:  {{selected_target_lights}}"
+          # - action: light.turn_on
+          #   metadata: {}
+          #   target: "{{selected_target_lights}}"
+          #   data:
+          #     hs_color:
+          #       - "{{trigger.payload_json.action_hue/255*360*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float
+          #       - 99.0
+
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name == 'move_to_hue_and_saturation' }}"
+        sequence:
+          - action: light.turn_on
+            metadata: {}
+            target: "{{selected_target_lights}}"
+            data:
+              hs_color:
+                - "{{trigger.payload_json.action_hue/255*360*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float
+                - "{{trigger.payload_json.action_saturation/255*100*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float [it seems superflous as it seems to always be 254]
+              transition: !input transition_time
+
+      - conditions:
+          - condition: template
+            value_template: "{{ command_name[:6] == 'recall' }}"
+        sequence:
+          - variables:
+              scene_number: "{{command_name[7:8]|int-1}}"
+          - action: light.turn_on
+            metadata: {}
+            target: "{{selected_target_lights}}"
+            data:
+              rgb_color: "{{scene_color_array[scene_number]}}"
+              brightness: "{{scene_brightness_array[scene_number]}}"
+              transition: !input transition_time
+
+    default:
+      #This is really just debug code
+      - sequence:
+          - action: mqtt.publish
+            metadata: {}
+            data:
+              topic: test
+              payload: "DEFAULT {{now()}} command_name {{command_name}}, selected_target_light: {{selected_target_light_id}}  selected_target_lights  {{selected_target_lights}}"
+
+mode: parallel
