@@ -26,6 +26,9 @@ This blueprint supports the following features of the Paulmann Gent 2 RGB remote
   * **Transition Time:**  Allows you to configure a transition time for smooth changes in brightness, color, and color temperature.
   * **Control of Multiple Light Groups:**  Provides configuration for controlling up to four different groups of lights, each assigned to a dedicated button on the remote.
 
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](upload://3IEiMyDuriGlhMmaFV0iSnXlL0b.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fbuz-ch%2Fpaulmann_gent2%2Fblob%2Fmain%2Fpaulmann_gent2.yaml)
+
+
 ## Limitations
 
 The following limitations are currently present in this blueprint:
