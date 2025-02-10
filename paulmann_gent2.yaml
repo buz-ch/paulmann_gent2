@@ -1,22 +1,37 @@
-# This blueprint uses zigbee2mqtt to receive commands to control lights from a Paulmann Gent2 RGB remote (see https://en.paulmann.com/detail/d6cceca46d334842bd3bd2008204274c and https://www.zigbee2mqtt.io/devices/501.40.html) which I believe is AKA Sunricher ZG2868.
-# Make sure to use the proper zigbee2mqtt topic and device name for the remote!
-#
-# Most features of the remote are supported, with a few limitations
-# - The color temperature buttons set three discrete configurable color temperatures (no increasing / decreasing) as it is not obvious to me how steps should work with different lights.
-# - The saturation button in the middle of the color wheel is not supported (do not understand what it is supposed to do)
-# - Color_move is not currently implemented (again, it's not obvious how that should behave with multiple lights)
-# - On/off uses light.toggle as the remote does not know the state - especially if you control the lights by other means. This however means that  if lights have differing states, they will switch (you can turn all of them on with some other command)!
-# - I have tested only with Philips Hue Color Lights, in particular LCA004 and Infuse. I have no idea what happens with non RGB lights, a lot of operations do not really make a lot sense for those)
-#
-# As usual (but more so because of the ability to use multiple targets at the same time), if the target is a group of zigbee lights, zigbee group is preferable to lighten load on the mesh.
-#
-# In case it's not obvious: this supersedes binding as per the remote manual. I have no idea what happens if you mix the blueprint with bindings as per the documentation of the remote.
-#
-# Disclaimer: This software is provided "as is," without any warranties or guarantees of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement. The authors and distributors shall not be liable for any damages arising from the use, inability to use, or performance of this software. Use at your own risk.
-
 blueprint:
   name: Paulmann Gent 2 RGB Remote
-  description: Control lights with the Paulmann Gent2 (and probably Sunricher ZG2868) RGB remote via Zigbee2MQTT
+  description: >
+    <h1>Paulmann Gent 2 RGB Remote Home Assistant Blueprint</h1>
+
+    <p>This Home Assistant blueprint provides control of lights using a Paulmann Gent 2 RGB remote (and likely compatible Sunricher ZG2868 models) via Zigbee2MQTT.</p>
+
+    <h2>Description</h2>
+
+    <p>This blueprint leverages Zigbee2MQTT to receive commands from the Paulmann Gent 2 RGB remote and translate them into actions to control your lights in Home Assistant. It aims to support most of the remote's functionalities, offering a convenient way to interact with your smart lighting.</p>
+
+    <p>The blueprint is designed primarily for RGB color lights but can be used with other types of lights, although some features may not be relevant or function as expected with non-RGB lighting.</p>
+
+    <p><b>Important Considerations:</b></p>
+
+    <ul>
+      <li><b>Zigbee2MQTT Requirement:</b> This blueprint requires you to be using Zigbee2MQTT to manage your Zigbee devices.</li>
+      <li><b>Remote Compatibility:</b> While designed for the Paulmann Gent 2 RGB remote (see <a href="https://en.paulmann.com/detail/d6cceca46d334842bd3bd2008204274c">Paulmann Gent 2 RGB Remote</a>), it is believed to also be compatible with the Sunricher ZG2868 (see <a href="https://www.zigbee2mqtt.io/devices/501.40.html">Zigbee2MQTT Device Page</a>). Ensure your remote is correctly paired with Zigbee2MQTT.</li>
+      <li><b>Topic Configuration:</b> You will need to configure the correct MQTT topic for your remote in the blueprint inputs.</li>
+    </ul>
+
+    <h2>Features</h2>
+
+    <p>This blueprint supports the following features of the Paulmann Gent 2 RGB remote:</p>
+
+    <ul>
+      <li><b>On/Off Control:</b> Toggles the power state of the configured lights using the on/off buttons. (cf. limitations below for the implications)</li>
+      <li><b>Brightness Adjustment:</b> Increases and decreases brightness in steps using dedicated brightness up/down buttons.</li>
+      <li><b>Color Temperature Control:</b> Sets predefined color temperatures (Warm White, Neutral White, Cold White) using the dedicated color temperature buttons (Fire, Play, Snowflake icons).</li>
+      <li><b>Color Selection from Color Wheel:</b> Allows you to select colors using the remote's color wheel, controlling the hue and saturation of your lights.</li>
+      <li><b>Scene Recall:</b> Supports recalling up to 7 pre-configured lighting scenes with custom colors and brightness levels, accessible via the 7 scene buttons on the remote.</li>
+      <li><b>Transition Time:</b> Allows you to configure a transition time for smooth changes in brightness, color, and color temperature.</li>
+      <li><b>Control of Multiple Light Groups:</b> Provides configuration for controlling up to four different groups of lights, each assigned to a dedicated button on the remote.</li>
+    </ul>
   domain: automation
   input:
     mqtt_topic:
