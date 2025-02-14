@@ -18,7 +18,10 @@ The blueprint is designed primarily for RGB color lights but can be used with ot
 
 This blueprint supports the following features of the Paulmann Gent 2 RGB remote:
 
-  * **On/Off Control:** Toggles the power state of the configured lights using the on/off buttons. (cf. limitations below for the implications)
+  * **Power button:** Three variants possible:
+    * Toggle: simply calls lights.toggle
+    * On/off: in case at least one lights of the group is on, tutrn them all off. Otherwise turn them all on.
+    * Adaptive: Like above, but turn on will select brightness and color temperature depending on the time of the day.
   * **Brightness Adjustment:**  Increases and decreases brightness in steps using dedicated brightness up/down buttons.
   * **Color Temperature Control:** Sets predefined color temperatures (Warm White, Neutral White, Cold White) using the dedicated color temperature buttons (Fire, Play, Snowflake icons).
   * **Color Selection from Color Wheel:** Allows you to select colors using the remote's color wheel, controlling the hue and saturation of your lights.
@@ -39,25 +42,7 @@ The following limitations are currently present in this blueprint:
   * **`light.toggle` for On/Off:** The blueprint uses `light.toggle` for on/off commands because the remote does not report light state. This means that if lights in a group have differing states, `toggle` might produce unexpected results.  For consistent on/off behavior across a group, ensure all lights in the group are in the same state before using the on/off buttons.
   * **Limited Testing:** The blueprint has primarily been tested with Philips Hue Color Lights (LCA004 and Infuse). Functionality with other light brands and types, especially non-RGB lights, is not guaranteed and may be limited or nonsensical.
 
-## Inputs
 
-Before using this blueprint, you need to configure the following inputs:
-
-| Input Variable                  | Description                                                                                                                                                                                                                            | Default Value            | Selector Type   |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | --------------- |
-| **`mqtt_topic`**                  | The base MQTT topic for your Paulmann Gent 2 remote in Zigbee2MQTT. This is usually in the format `zigbee2mqtt/{FRIENDLY_NAME}`, where `{FRIENDLY_NAME}` is the friendly name you assigned to your remote in Zigbee2MQTT. | `"zigbee2mqtt/"`        | Text            |
-| **`target_lights_1`**             | Lights to control with button 1 on the remote. You can select individual lights or light groups.                                                                                                                                     | `[]` (No lights selected) | Target (Light Entity) |
-| **`target_lights_2`**             | Lights to control with button 2 on the remote.                                                                                                                                                                                          | `[]` (No lights selected) | Target (Light Entity) |
-| **`target_lights_3`**             | Lights to control with button 3 on the remote.                                                                                                                                                                                          | `[]` (No lights selected) | Target (Light Entity) |
-| **`target_lights_4`**             | Lights to control with button 4 on the remote.                                                                                                                                                                                          | `[]` (No lights selected) | Target (Light Entity) |
-| **`transition_time`**             | The time (in seconds) for transitions between light states (brightness, color, color temperature changes).                                                                                                                               | `5` seconds                | Number (Range 0-1800) |
-| **`color_temperature_warm_white`**  | The color temperature (in Kelvin) to set when the "Warm White" (Fire icon) button is pressed.                                                                                                                                     | `2700` Kelvin             | Number (Range 2000-9000) |
-| **`color_temperature_neutral_white`** | The color temperature (in Kelvin) to set when the "Neutral White" (Play icon) button is pressed.                                                                                                                                  | `4000` Kelvin             | Number (Range 2000-9000) |
-| **`color_temperature_cold_white`**   | The color temperature (in Kelvin) to set when the "Cold White" (Snowflake icon) button is pressed.                                                                                                                                  | `6000` Kelvin             | Number (Range 2000-9000) |
-| **`scene_1_color`** - **`scene_7_color`** |  RGB color for scene 1 through scene 7, respectively. Configures the color recalled when the corresponding scene button is pressed.                                                                                             | `[255, 255, 255]` (White)  | Color RGB       |
-| **`scene_1_brightness`** - **`scene_7_brightness`** | Brightness level (percentage 1-100) for scene 1 through scene 7, respectively. Configures the brightness recalled when the corresponding scene button is pressed.                                                       | `80` (%)                   | Number (Range 1-100) |
-
-## Installation and Usage
 
 1.  **Prerequisites:**
       * **Home Assistant:** Ensure you have a working Home Assistant installation.
@@ -75,7 +60,9 @@ Before using this blueprint, you need to configure the following inputs:
           * **`target_lights_1` - `target_lights_4`:** Select the light entities or light groups you want to control with each button.
           * **`transition_time`:** Adjust the transition time if desired.
           * **`color_temperature_*_white`:** Customize the color temperatures for the dedicated buttons if needed.
+          * **`Power button behavior`:** set how the power button behaves. See above.
           * **`scene_*_color` and `scene_*_brightness`:** Define the colors and brightness levels for each of the 7 scenes.
+
       * Click "**Save**" to save your automation.
 4.  **Test:**  Test the remote buttons to ensure they control your lights as expected. Monitor the MQTT topic in your Zigbee2MQTT interface or Home Assistant logs for any errors or unexpected behavior.
 

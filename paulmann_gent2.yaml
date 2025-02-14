@@ -24,7 +24,13 @@ blueprint:
     <p>This blueprint supports the following features of the Paulmann Gent 2 RGB remote:</p>
 
     <ul>
-      <li><b>On/Off Control:</b> Toggles the power state of the configured lights using the on/off buttons. (cf. limitations below for the implications)</li>
+      <li><b>Power button</b>: Three variants possible
+        <ul>
+          <li>Toggle: simply calls lights.toggle</li>
+          <li>On/off: in case at least one lights of the group is on, tutrn them all off. Otherwise turn them all on.</li>
+          <li>Adaptive: Like above, but turn on will select brightness and color temperature depending on the time of the day.</li>
+        </ul>
+        </li>
       <li><b>Brightness Adjustment:</b> Increases and decreases brightness in steps using dedicated brightness up/down buttons.</li>
       <li><b>Color Temperature Control:</b> Sets predefined color temperatures (Warm White, Neutral White, Cold White) using the dedicated color temperature buttons (Fire, Play, Snowflake icons).</li>
       <li><b>Color Selection from Color Wheel:</b> Allows you to select colors using the remote's color wheel, controlling the hue and saturation of your lights.</li>
@@ -108,110 +114,261 @@ blueprint:
           min: 2000
           max: 9000
 
-    scene_1_color:
-      name: Color of scene 1
-      description: Which color for scene 1
-      default: [255, 255, 255]
-      selector:
-        color_rgb:
-    scene_1_brightness:
-      name: Brightness of scene 1
-      description: Which brightness for scene 1
-      default: 80
-      selector:
-        number:
-          min: 1
-          max: 100
+    # --- Adaptive Lighting Settings ---
+    adaptive_lighting_settings:
+      name: Behavior of power button
+      icon: mdi:sun-thermometer-outline
+      collapsed: true
+      input:
+        light_control_logic:
+          name:  Power button behavior
+          description: How should the lights react upon press of power button
+          default: toggle 
+          selector:
+            select:
+              options:
+                - label: Toggle the lights to their respective other state
+                  value: toggle
+                - label: On/off logic (switch off if at least one of the lights in the group is on)
+                  value: onoff_logic
+                - label: Adaptive (use time sensitive brightness and color temperature, use the following fields to set time periods and associated parameters)
+                  value: adaptive 
+              mode: dropdown
 
-    scene_2_color:
-      name: Color of scene 2
-      description: Which color for scene 2
-      default: [255, 255, 255]
-      selector:
-        color_rgb:
-    scene_2_brightness:
-      name: Brightness of scene 2
-      description: Which brightness for scene 2
-      default: 80
-      selector:
-        number:
-          min: 1
-          max: 100
 
-    scene_3_color:
-      name: Color of scene 3
-      description: Which color for scene 3
-      default: [255, 255, 255]
-      selector:
-        color_rgb:
-    scene_3_brightness:
-      name: Brightness of scene 3
-      description: Which brightness for scene 3
-      default: 80
-      selector:
-        number:
-          min: 1
-          max: 100
+        morning_start_time:
+          name: Morning Start Time
+          description: Time when morning lighting should begin and night lighting ends. Only used with adaptive.
+          default: "06:00:00"
+          selector:
+            time: {}
 
-    scene_4_color:
-      name: Color of scene 4
-      description: Which color for scene 4
-      default: [255, 255, 255]
-      selector:
-        color_rgb:
-    scene_4_brightness:
-      name: Brightness of scene 4
-      description: Which brightness for scene 4
-      default: 80
-      selector:
-        number:
-          min: 1
-          max: 100
+        morning_color_temp:
+          name: Morning Color Temperature (Kelvin)
+          description: Warmer, sunrise-like color temperature for mornings (e.g., 2700K - 3500K). Only used with adaptive.
+          default: 3000
+          selector:
+            number:
+              mode: slider
+              min: 2000
+              max: 6500
+              unit_of_measurement: K
+              step: 100
 
-    scene_5_color:
-      name: Color of scene 5
-      description: Which color for scene 5
-      default: [255, 255, 255]
-      selector:
-        color_rgb:
-    scene_5_brightness:
-      name: Brightness of scene 5
-      description: Which brightness for scene 5
-      default: 80
-      selector:
-        number:
-          min: 1
-          max: 100
+        morning_brightness:
+          name: Morning Brightness (Percentage)
+          description: Brightness percentage for mornings. Only used with adaptive.
+          default: 40
+          selector:
+            number:
+              mode: slider
+              min: 0
+              max: 100
+              unit_of_measurement: "%"
+              step: 1
 
-    scene_6_color:
-      name: Color of scene 6
-      description: Which color for scene 6
-      default: [255, 255, 255]
-      selector:
-        color_rgb:
-    scene_6_brightness:
-      name: Brightness of scene 6
-      description: Which brightness for scene 6
-      default: 80
-      selector:
-        number:
-          min: 1
-          max: 100
+        day_start_time:
+          name: Day Start Time
+          description: Time when day lighting should begin and morning lighting ends. Only used with adaptive.
+          default: "09:00:00"
+          selector:
+            time: {}
 
-    scene_7_color:
-      name: Color of scene 7
-      description: Which color for scene 7
-      default: [255, 255, 255]
-      selector:
-        color_rgb:
-    scene_7_brightness:
-      name: Brightness of scene 7
-      description: Which brightness for scene 7
-      default: 80
-      selector:
-        number:
-          min: 1
-          max: 100
+        day_color_temp:
+          name: Day Color Temperature (Kelvin)
+          description: Brighter, cooler color temperature for daytime (e.g., 4000K - 5000K). Only used with adaptive.
+          default: 4500
+          selector:
+            number:
+              mode: slider
+              min: 2000
+              max: 6500
+              unit_of_measurement: K
+              step: 100
+
+        day_brightness:
+          name: Day Brightness (Percentage)
+          description: Brightness percentage for daytime. Only used with adaptive.
+          default: 100
+          selector:
+            number:
+              mode: slider
+              min: 0
+              max: 100
+              unit_of_measurement: "%"
+              step: 1
+
+        evening_start_time:
+          name: Evening Start Time
+          description: Time when evening lighting should begin and day lighting ends. Only used with adaptive.
+          default: "17:00:00"
+          selector:
+            time: {}
+
+        evening_color_temp:
+          name: Evening Color Temperature (Kelvin)
+          description: Warmer, sunset-like color temperature for evenings (e.g., 2500K - 3000K). Only used with adaptive.
+          default: 2700
+          selector:
+            number:
+              mode: slider
+              min: 2000
+              max: 6500
+              unit_of_measurement: K
+              step: 100
+
+        evening_brightness:
+          name: Evening Brightness (Percentage)
+          description: Brightness percentage for evenings. Only used with adaptive.
+          default: 60
+          selector:
+            number:
+              mode: slider
+              min: 0
+              max: 100
+              unit_of_measurement: "%"
+              step: 1
+
+        night_start_time:
+          name: Night Start Time
+          description: Time when night lighting should begin and evening lighting ends (can be past midnight). Only used with adaptive.
+          default: "22:00:00"
+          selector:
+            time: {}
+
+        night_color_temp:
+          name: Night Color Temperature (Kelvin)
+          description: Very warm, dimmest color temperature for nighttime (e.g., 2200K - 2700K). Only used with adaptive.
+          default: 2500
+          selector:
+            number:
+              mode: slider
+              min: 2000
+              max: 6500
+              unit_of_measurement: K
+              step: 100
+
+        night_brightness:
+          name: Night Brightness (Percentage)
+          description: Brightness percentage for nighttime. Only used with adaptive.
+          default: 40 
+          selector:
+            number:
+              mode: slider
+              min: 0
+              max: 100
+              unit_of_measurement: "%"
+              step: 1
+
+    scene_setups:
+      name: Scene setups
+      icon: mdi:palette
+      collapsed: true
+      input:
+        scene_1_color:
+          name: Color of scene 1
+          description: Which color for scene 1
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+        scene_1_brightness:
+          name: Brightness of scene 1
+          description: Which brightness for scene 1
+          default: 80
+          selector:
+            number:
+              min: 1
+              max: 100
+
+        scene_2_color:
+          name: Color of scene 2
+          description: Which color for scene 2
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+        scene_2_brightness:
+          name: Brightness of scene 2
+          description: Which brightness for scene 2
+          default: 80
+          selector:
+            number:
+              min: 1
+              max: 100
+
+        scene_3_color:
+          name: Color of scene 3
+          description: Which color for scene 3
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+        scene_3_brightness:
+          name: Brightness of scene 3
+          description: Which brightness for scene 3
+          default: 80
+          selector:
+            number:
+              min: 1
+              max: 100
+
+        scene_4_color:
+          name: Color of scene 4
+          description: Which color for scene 4
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+        scene_4_brightness:
+          name: Brightness of scene 4
+          description: Which brightness for scene 4
+          default: 80
+          selector:
+            number:
+              min: 1
+              max: 100
+
+        scene_5_color:
+          name: Color of scene 5
+          description: Which color for scene 5
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+        scene_5_brightness:
+          name: Brightness of scene 5
+          description: Which brightness for scene 5
+          default: 80
+          selector:
+            number:
+              min: 1
+              max: 100
+
+        scene_6_color:
+          name: Color of scene 6
+          description: Which color for scene 6
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+        scene_6_brightness:
+          name: Brightness of scene 6
+          description: Which brightness for scene 6
+          default: 80
+          selector:
+            number:
+              min: 1
+              max: 100
+
+        scene_7_color:
+          name: Color of scene 7
+          description: Which color for scene 7
+          default: [255, 255, 255]
+          selector:
+            color_rgb:
+        scene_7_brightness:
+          name: Brightness of scene 7
+          description: Which brightness for scene 7
+          default: 80
+          selector:
+            number:
+              min: 1
+              max: 100
 
 trigger:
   - platform: mqtt
@@ -243,13 +400,94 @@ action:
         - !input scene_7_brightness
       selected_target_light_id: "{{ trigger.payload_json.action[-1]}}" #last char is LIGHTNUMBER
       selected_target_lights: "{{target_light_array[selected_target_light_id-1]}}"
+
+      #transition_time_var: !input transition_time
+      #brightness_transition_time_var: !input brightness_transition_time
+      current_time: "{{ now().strftime('%H:%M:%S') }}"
+      day_start: !input day_start_time
+      evening_start: !input evening_start_time
+      night_start: !input night_start_time
+      morning_start: !input morning_start_time
+
+      var_morning_color_temp: !input morning_color_temp
+      var_day_color_temp: !input day_color_temp
+      var_evening_color_temp: !input evening_color_temp
+      var_night_color_temp: !input night_color_temp
+      var_morning_brightness: !input morning_brightness
+      var_day_brightness: !input day_brightness
+      var_evening_brightness: !input evening_brightness
+      var_night_brightness: !input night_brightness
+      var_light_control_logic: !input light_control_logic
+
+
+
+
+      entities: >
+        {%- set ns = namespace(ret=[]) %}
+        {%- for key in ['device_id', 'area_id', 'entity_id'] %}
+          {%- set items = selected_target_lights.get(key, [])  %}
+          {%- if items %}
+            {%- set items = [ items ] if items is string else items %}
+            {%- set filt = key.split('_') | first %}
+            {%- set items = items if filt == 'entity' else items | map(filt ~ '_entities') | sum(start=[]) %}
+            {%- set ns.ret = ns.ret + [ items ] %}
+          {%- endif %}
+        {%- endfor %}
+        {{ ns.ret | sum(start=[]) }}
+      filtered: "{{ entities | select( 'search' , '^light' ) | select('is_state', 'on') | list }}"
+      lights_on: "{{ filtered | count > 0 }}"
+
+      adaptive_color_temp: >
+        {% if current_time >= morning_start and current_time < day_start %}
+          {{ var_morning_color_temp }}
+        {% elif current_time >= day_start and current_time < evening_start %}
+          {{ var_day_color_temp }}
+        {% elif current_time >= evening_start and current_time < night_start %}
+          {{ var_evening_color_temp }}
+        {% else %} {# Night or time past midnight #}
+          {{ var_night_color_temp }}
+        {% endif %}
+
+      adaptive_brightness_pct: >
+        {% if current_time >= morning_start and current_time < day_start %}
+          {{ var_morning_brightness }}
+        {% elif current_time >= day_start and current_time < evening_start %}
+          {{ var_day_brightness }}
+        {% elif current_time >= evening_start and current_time < night_start %}
+          {{ var_evening_brightness }}
+        {% else %} {# Night or time past midnight #}
+          {{ var_night_brightness }}
+        {% endif %}
   - choose:
       - conditions:
           - condition: template
-            value_template: "{{ command_name == 'on' or  command_name == 'off'}}"
+            value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'toggle'}}"
         sequence:
           - action: light.toggle
             target: "{{selected_target_lights}}"
+      - conditions:
+          - condition: template
+            value_template: "{{ (command_name == 'on' or  command_name == 'off') and lights_on }}"
+        sequence:
+          - action: light.turn_off
+            target: "{{selected_target_lights}}"
+      - conditions:
+          - condition: template
+            value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'onoff_logic' and not lights_on }}"
+        sequence:
+          - action: light.turn_on
+            target: "{{selected_target_lights}}"
+      - conditions:
+          - condition: template
+            value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'adaptive' and not lights_on }}"
+        sequence:
+          - action: light.turn_on
+            target: "{{selected_target_lights}}"
+            data:
+              #transition: "{{ transition_time_var }}"
+              color_temp_kelvin: "{{ adaptive_color_temp }}"
+              brightness_pct: "{{ adaptive_brightness_pct }}"
+
 
       - conditions:
           - condition: template
