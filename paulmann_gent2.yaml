@@ -374,10 +374,6 @@ trigger:
   - platform: mqtt
     topic: !input mqtt_topic
 action:
-  - service: system_log.write
-    data:
-      message: "Received MQTT message: {{ trigger }}"
-      level: warning # Or info/debug as needed
   - choose:
       - conditions: #ONLY CONTINUE IF ACTION IS SET TO AVOID ACCESSING EMPTY DICTS LATER ON
           - condition: template
