@@ -373,223 +373,223 @@ blueprint:
 trigger:
   - platform: mqtt
     topic: !input mqtt_topic
-
 action:
-  - variables:
-      command_name: "{{ trigger.payload_json.action[:-2] }}" #last two characters are _BUTTONNUMBER
-      target_light_array:
-        - !input target_lights_1
-        - !input target_lights_2
-        - !input target_lights_3
-        - !input target_lights_4
-      scene_color_array:
-        - !input scene_1_color
-        - !input scene_2_color
-        - !input scene_3_color
-        - !input scene_4_color
-        - !input scene_5_color
-        - !input scene_6_color
-        - !input scene_7_color
-      scene_brightness_array:
-        - !input scene_1_brightness
-        - !input scene_2_brightness
-        - !input scene_3_brightness
-        - !input scene_4_brightness
-        - !input scene_5_brightness
-        - !input scene_6_brightness
-        - !input scene_7_brightness
-      selected_target_light_id: "{{ trigger.payload_json.action[-1]}}" #last char is LIGHTNUMBER
-      selected_target_lights: "{{target_light_array[selected_target_light_id-1]}}"
-
-      #transition_time_var: !input transition_time
-      #brightness_transition_time_var: !input brightness_transition_time
-      current_time: "{{ now().strftime('%H:%M:%S') }}"
-      day_start: !input day_start_time
-      evening_start: !input evening_start_time
-      night_start: !input night_start_time
-      morning_start: !input morning_start_time
-
-      var_morning_color_temp: !input morning_color_temp
-      var_day_color_temp: !input day_color_temp
-      var_evening_color_temp: !input evening_color_temp
-      var_night_color_temp: !input night_color_temp
-      var_morning_brightness: !input morning_brightness
-      var_day_brightness: !input day_brightness
-      var_evening_brightness: !input evening_brightness
-      var_night_brightness: !input night_brightness
-      var_light_control_logic: !input light_control_logic
-
-
-
-
-      entities: >
-        {%- set ns = namespace(ret=[]) %}
-        {%- for key in ['device_id', 'area_id', 'entity_id'] %}
-          {%- set items = selected_target_lights.get(key, [])  %}
-          {%- if items %}
-            {%- set items = [ items ] if items is string else items %}
-            {%- set filt = key.split('_') | first %}
-            {%- set items = items if filt == 'entity' else items | map(filt ~ '_entities') | sum(start=[]) %}
-            {%- set ns.ret = ns.ret + [ items ] %}
-          {%- endif %}
-        {%- endfor %}
-        {{ ns.ret | sum(start=[]) }}
-      filtered: "{{ entities | select( 'search' , '^light' ) | select('is_state', 'on') | list }}"
-      lights_on: "{{ filtered | count > 0 }}"
-
-      adaptive_color_temp: >
-        {% if current_time >= morning_start and current_time < day_start %}
-          {{ var_morning_color_temp }}
-        {% elif current_time >= day_start and current_time < evening_start %}
-          {{ var_day_color_temp }}
-        {% elif current_time >= evening_start and current_time < night_start %}
-          {{ var_evening_color_temp }}
-        {% else %} {# Night or time past midnight #}
-          {{ var_night_color_temp }}
-        {% endif %}
-
-      adaptive_brightness_pct: >
-        {% if current_time >= morning_start and current_time < day_start %}
-          {{ var_morning_brightness }}
-        {% elif current_time >= day_start and current_time < evening_start %}
-          {{ var_day_brightness }}
-        {% elif current_time >= evening_start and current_time < night_start %}
-          {{ var_evening_brightness }}
-        {% else %} {# Night or time past midnight #}
-          {{ var_night_brightness }}
-        {% endif %}
+  - service: system_log.write
+    data:
+      message: "Received MQTT message: {{ trigger }}"
+      level: warning # Or info/debug as needed
   - choose:
-      - conditions:
+      - conditions: #ONLY CONTINUE IF ACTION IS SET TO AVOID ACCESSING EMPTY DICTS LATER ON
           - condition: template
-            value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'toggle'}}"
-        sequence:
-          - action: light.toggle
-            target: "{{selected_target_lights}}"
-      - conditions:
-          - condition: template
-            value_template: "{{ (command_name == 'on' or  command_name == 'off') and lights_on }}"
-        sequence:
-          - action: light.turn_off
-            target: "{{selected_target_lights}}"
-      - conditions:
-          - condition: template
-            value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'onoff_logic' and not lights_on }}"
-        sequence:
-          - action: light.turn_on
-            target: "{{selected_target_lights}}"
-      - conditions:
-          - condition: template
-            value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'adaptive' and not lights_on }}"
-        sequence:
-          - action: light.turn_on
-            target: "{{selected_target_lights}}"
-            data:
-              #transition: "{{ transition_time_var }}"
-              color_temp_kelvin: "{{ adaptive_color_temp }}"
-              brightness_pct: "{{ adaptive_brightness_pct }}"
-
-
-      - conditions:
-          - condition: template
-            value_template: "{{ command_name == 'brightness_step_down' }}"
-        sequence:
-          - action: light.turn_on
-            target: "{{selected_target_lights}}"
-            data:
-              brightness_step_pct: -10
-              transition: !input transition_time
-
-      - conditions:
-          - condition: template
-            value_template: "{{ command_name == 'brightness_step_up' }}"
-        sequence:
-          - action: light.turn_on
-            target: "{{selected_target_lights}}"
-            data:
-              brightness_step_pct: 10
-              transition: !input transition_time
-
-      - conditions:
-          - condition: template
-            value_template: "{{ command_name == 'color_temperature_step_down' }}"
-        sequence:
-          - action: light.turn_on
-            target: "{{selected_target_lights}}"
-            data:
-              color_temp_kelvin: !input color_temperature_cold_white
-              transition: !input transition_time
-
-      - conditions:
-          - condition: template
-            value_template: "{{ command_name == 'color_temperature_step_up' }}"
-        sequence:
-          - action: light.turn_on
-            target: "{{selected_target_lights}}"
-            data:
-              color_temp_kelvin: !input color_temperature_warm_white
-              transition: !input transition_time
-
-      - conditions:
-          - condition: template
-            value_template: "{{ command_name == 'color_temperature_move' }}"
-        sequence:
-          - action: light.turn_on
-            target: "{{selected_target_lights}}"
-            data:
-              color_temp_kelvin: !input color_temperature_neutral_white
-              transition: !input transition_time
-
-      - conditions:
-          - condition: template
-            value_template: "{{ command_name == 'hue_move' }}"
-        sequence:
-          - action: mqtt.publish
-            metadata: {}
-            data:
-              topic: test
-              payload: "{{NOW}} command_name {{command_name}}, selected_target_light: {{selected_target_light_id}}  target_lights:  {{selected_target_lights}}"
-          # - action: light.turn_on
-          #   metadata: {}
-          #   target: "{{selected_target_lights}}"
-          #   data:
-          #     hs_color:
-          #       - "{{trigger.payload_json.action_hue/255*360*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float
-          #       - 99.0
-
-      - conditions:
-          - condition: template
-            value_template: "{{ command_name == 'move_to_hue_and_saturation' }}"
-        sequence:
-          - action: light.turn_on
-            metadata: {}
-            target: "{{selected_target_lights}}"
-            data:
-              hs_color:
-                - "{{trigger.payload_json.action_hue/255*360*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float
-                - "{{trigger.payload_json.action_saturation/255*100*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float [it seems superflous as it seems to always be 254]
-              transition: !input transition_time
-
-      - conditions:
-          - condition: template
-            value_template: "{{ command_name[:6] == 'recall' }}"
-        sequence:
+            value_template: "{{ trigger.payload_json.action is defined}}" 
+        sequence: 
           - variables:
-              scene_number: "{{command_name[7:8]|int-1}}"
-          - action: light.turn_on
-            metadata: {}
-            target: "{{selected_target_lights}}"
-            data:
-              rgb_color: "{{scene_color_array[scene_number]}}"
-              brightness: "{{scene_brightness_array[scene_number]}}"
-              transition: !input transition_time
+              command_name: "{{ trigger.payload_json.action[:-2] }}"
 
-    default:
-      #This is really just debug code
-      - sequence:
-          - action: mqtt.publish
-            metadata: {}
-            data:
-              topic: test
-              payload: "DEFAULT {{now()}} command_name {{command_name}}, selected_target_light: {{selected_target_light_id}}  selected_target_lights  {{selected_target_lights}}"
+              target_light_array:
+                - !input target_lights_1
+                - !input target_lights_2
+                - !input target_lights_3
+                - !input target_lights_4
+              scene_color_array:
+                - !input scene_1_color
+                - !input scene_2_color
+                - !input scene_3_color
+                - !input scene_4_color
+                - !input scene_5_color
+                - !input scene_6_color
+                - !input scene_7_color
+              scene_brightness_array:
+                - !input scene_1_brightness
+                - !input scene_2_brightness
+                - !input scene_3_brightness
+                - !input scene_4_brightness
+                - !input scene_5_brightness
+                - !input scene_6_brightness
+                - !input scene_7_brightness
+              selected_target_light_id: "{{ trigger.payload_json.action[-1]}}" #last char is LIGHTNUMBER
+              selected_target_lights: "{{target_light_array[selected_target_light_id-1]}}"
+
+              #transition_time_var: !input transition_time
+              #brightness_transition_time_var: !input brightness_transition_time
+              current_time: "{{ now().strftime('%H:%M:%S') }}"
+              day_start: !input day_start_time
+              evening_start: !input evening_start_time
+              night_start: !input night_start_time
+              morning_start: !input morning_start_time
+
+              var_morning_color_temp: !input morning_color_temp
+              var_day_color_temp: !input day_color_temp
+              var_evening_color_temp: !input evening_color_temp
+              var_night_color_temp: !input night_color_temp
+              var_morning_brightness: !input morning_brightness
+              var_day_brightness: !input day_brightness
+              var_evening_brightness: !input evening_brightness
+              var_night_brightness: !input night_brightness
+              var_light_control_logic: !input light_control_logic
+
+
+
+
+              entities: >
+                {%- set ns = namespace(ret=[]) %}
+                {%- for key in ['device_id', 'area_id', 'entity_id'] %}
+                  {%- set items = selected_target_lights.get(key, [])  %}
+                  {%- if items %}
+                    {%- set items = [ items ] if items is string else items %}
+                    {%- set filt = key.split('_') | first %}
+                    {%- set items = items if filt == 'entity' else items | map(filt ~ '_entities') | sum(start=[]) %}
+                    {%- set ns.ret = ns.ret + [ items ] %}
+                  {%- endif %}
+                {%- endfor %}
+                {{ ns.ret | sum(start=[]) }}
+              filtered: "{{ entities | select( 'search' , '^light' ) | select('is_state', 'on') | list }}"
+              lights_on: "{{ filtered | count > 0 }}"
+
+              adaptive_color_temp: >
+                {% if current_time >= morning_start and current_time < day_start %}
+                  {{ var_morning_color_temp }}
+                {% elif current_time >= day_start and current_time < evening_start %}
+                  {{ var_day_color_temp }}
+                {% elif current_time >= evening_start and current_time < night_start %}
+                  {{ var_evening_color_temp }}
+                {% else %} {# Night or time past midnight #}
+                  {{ var_night_color_temp }}
+                {% endif %}
+
+              adaptive_brightness_pct: >
+                {% if current_time >= morning_start and current_time < day_start %}
+                  {{ var_morning_brightness }}
+                {% elif current_time >= day_start and current_time < evening_start %}
+                  {{ var_day_brightness }}
+                {% elif current_time >= evening_start and current_time < night_start %}
+                  {{ var_evening_brightness }}
+                {% else %} {# Night or time past midnight #}
+                  {{ var_night_brightness }}
+                {% endif %}
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'toggle'}}"
+                sequence:
+                  - action: light.toggle
+                    target: "{{selected_target_lights}}"
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (command_name == 'on' or  command_name == 'off') and lights_on }}"
+                sequence:
+                  - action: light.turn_off
+                    target: "{{selected_target_lights}}"
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'onoff_logic' and not lights_on }}"
+                sequence:
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ (command_name == 'on' or  command_name == 'off') and var_light_control_logic == 'adaptive' and not lights_on }}"
+                sequence:
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+                    data:
+                      #transition: "{{ transition_time_var }}"
+                      color_temp_kelvin: "{{ adaptive_color_temp }}"
+                      brightness_pct: "{{ adaptive_brightness_pct }}"
+
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ command_name == 'brightness_step_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+                    data:
+                      brightness_step_pct: -10
+                      transition: !input transition_time
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ command_name == 'brightness_step_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+                    data:
+                      brightness_step_pct: 10
+                      transition: !input transition_time
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ command_name == 'color_temperature_step_down' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+                    data:
+                      color_temp_kelvin: !input color_temperature_cold_white
+                      transition: !input transition_time
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ command_name == 'color_temperature_step_up' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+                    data:
+                      color_temp_kelvin: !input color_temperature_warm_white
+                      transition: !input transition_time
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ command_name == 'color_temperature_move' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+                    data:
+                      color_temp_kelvin: !input color_temperature_neutral_white
+                      transition: !input transition_time
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ command_name == 'hue_move' }}"
+                sequence:
+                  [] #do nothing
+                  # - action: light.turn_on
+                  #   metadata: {}
+                  #   target: "{{selected_target_lights}}"
+                  #   data:
+                  #     hs_color:
+                  #       - "{{trigger.payload_json.action_hue/255*360*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float
+                  #       - 99.0
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ command_name == 'move_to_hue_and_saturation' }}"
+                sequence:
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+                    data:
+                      hs_color:
+                        - "{{trigger.payload_json.action_hue/255*360*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float
+                        - "{{trigger.payload_json.action_saturation/255*100*1.0}}" #we get a number between 0 and 255 and need one between 0 and 360, enforcing a float [it seems superflous as it seems to always be 254]
+                      transition: !input transition_time
+
+              - conditions:
+                  - condition: template
+                    value_template: "{{ command_name[:6] == 'recall' }}"
+                sequence:
+                  - variables:
+                      scene_number: "{{command_name[7:8]|int-1}}"
+                  - action: light.turn_on
+                    target: "{{selected_target_lights}}"
+                    data:
+                      rgb_color: "{{scene_color_array[scene_number]}}"
+                      brightness: "{{scene_brightness_array[scene_number]}}"
+                      transition: !input transition_time
+
+            default:
+              #do nothing   
 
 mode: parallel
